@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jellyfin Profanity Filter</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    h1 {
+      color: #4fc3f7;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .settings-panel {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .settings-panel h2 {
+      color: #4fc3f7;
+      margin-bottom: 15px;
+    }
+    
+    .setting-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      gap: 10px;
+    }
+    
+    .setting-row:last-child {
+      margin-bottom: 0;
+    }
+    
+    label {
+      min-width: 200px;
+      font-weight: 500;
+    }
+    
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+    
+    input[type="range"] {
+      flex: 1;
+      max-width: 300px;
+    }
+    
+    select {
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: none;
+      background: #0f3460;
+      color: #eee;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    
+    .word-manager {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 20px;
+    }
+    
+    .word-manager h2 {
+      color: #4fc3f7;
+      margin-bottom: 15px;
+    }
+    
+    .add-word-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .add-word-form input {
+      flex: 1;
+      min-width: 200px;
+      padding: 10px;
+      border-radius: 4px;
+      border: none;
+      background: #0f3460;
+      color: #eee;
+    }
+    
+    .add-word-form select {
+      min-width: 120px;
+    }
+    
+    .add-word-form button {
+      padding: 10px 20px;
+      background: #4fc3f7;
+      color: #1a1a2e;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    .add-word-form button:hover {
+      background: #80d8ff;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #0f3460;
+    }
+    
+    th {
+      color: #4fc3f7;
+      font-weight: 500;
+    }
+    
+    tr:hover {
+      background: #1a2a4a;
+    }
+    
+    .action-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    
+    .btn-delete {
+      background: #e94560;
+      color: white;
+    }
+    
+    .btn-delete:hover {
+      background: #ff6b8a;
+    }
+    
+    .checkbox-cell {
+      text-align: center;
+    }
+    
+    .empty-state {
+      text-align: center;
+      color: #888;
+      padding: 40px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Jellyfin Profanity Filter</h1>
+    
+    <!-- Global Settings -->
+    <div class="settings-panel">
+      <h2>Global Settings</h2>
+      
+      <div class="setting-row">
+        <label for="filter-enabled">Enable Filter:</label>
+        <input type="checkbox" id="filter-enabled" checked>
+      </div>
+      
+      <div class="setting-row">
+        <label for="confidence-threshold">Confidence Threshold:</label>
+        <span id="threshold-value">0.50</span>
+        <input type="range" id="confidence-threshold" min="0.1" max="1.0" step="0.1" value="0.5">
+      </div>
+      
+      <div class="setting-row">
+        <label for="action-on-profanity">Action on Profanity:</label>
+        <select id="action-on-profanity">
+          <option value="mute">Mute (Pause Playback)</option>
+          <option value="skip">Skip (Delay Resume)</option>
+          <option value="both">Both Mute and Skip</option>
+        </select>
+      </div>
+    </div>
+    
+    <!-- Word Manager -->
+    <div class="word-manager">
+      <h2>Word Manager</h2>
+      
+      <div class="add-word-form">
+        <input type="text" id="new-word" placeholder="Enter word to filter (e.g., F#ck, G#d)">
+        <select id="word-category">
+          <option value="custom">Custom</option>
+          <option value="slang">Slang</option>
+          <option value="explicit">Explicit</option>
+          <option value="offensive">Offensive</option>
+        </select>
+        <button id="add-word-btn">Add Word</button>
+      </div>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>Word</th>
+            <th>Category</th>
+            <th class="checkbox-cell">Enabled</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="words-table-body">
+          <!-- Words will be inserted here -->
+        </tbody>
+      </table>
+      
+      <div id="empty-state" class="empty-state" style="display: none;">
+        No words added yet. Add a word above to start filtering.
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Sample data - would be loaded from config in production
+    let words = [
+      { id: '1', word: 'F#ck', category: 'explicit', enabled: true },
+      { id: '2', word: 'G#d', category: 'slang', enabled: true },
+      { id: '3', word: 'D##n', category: 'offensive', enabled: false }
+    ];
+    
+    // Update threshold display
+    const thresholdInput = document.getElementById('confidence-threshold');
+    const thresholdValue = document.getElementById('threshold-value');
+    thresholdInput.addEventListener('input', () => {
+      thresholdValue.textContent = thresholdInput.value.toFixed(2);
+    });
+    
+    // Render words table
+    function renderWords() {
+      const tbody = document.getElementById('words-table-body');
+      const emptyState = document.getElementById('empty-state');
+      
+      if (words.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+      }
+      
+      emptyState.style.display = 'none';
+      tbody.innerHTML = words.map(word => `
+        <tr data-id="${word.id}">
+          <td>${word.word}</td>
+          <td>${word.category}</td>
+          <td class="checkbox-cell">
+            <input type="checkbox" ${word.enabled ? 'checked' : ''}>
+          </td>
+          <td>
+            <button class="action-btn btn-delete" data-id="${word.id}">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+    
+    // Add word
+    document.getElementById('add-word-btn').addEventListener('click', () => {
+      const input = document.getElementById('new-word');
+      const category = document.getElementById('word-category');
+      const value = input.value.trim();
+      
+      if (value) {
+        words.push({
+          id: Date.now().toString(),
+          word: value,
+          category: category.value,
+          enabled: true
+        });
+        renderWords();
+        input.value = '';
+      }
+    });
+    
+    // Toggle word
+    document.addEventListener('click', (e) => {
+      if (e.target.matches('tr[data-id]')) {
+        const row = e.target.closest('tr');
+        const id = row.dataset.id;
+        const checkbox = row.querySelector('input[type="checkbox"]');
+        const word = words.find(w => w.id === id);
+        if (word && checkbox) {
+          word.enabled = checkbox.checked;
+          renderWords();
+        }
+      }
+    });
+    
+    // Delete word
+    document.addEventListener('click', (e) => {
+      if (e.target.matches('.btn-delete')) {
+        const id = e.target.dataset.id;
+        words = words.filter(w => w.id !== id);
+        renderWords();
+      }
+    });
+    
+    // Initialize
+    renderWords();
+  </script>
+</body>
+</html>
