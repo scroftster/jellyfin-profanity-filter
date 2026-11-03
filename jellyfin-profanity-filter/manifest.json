@@ -3,10 +3,11 @@
   "name": "Profanity Filter",
   "description": "Filters profanity during media playback using Whisper for speech-to-text and Phi-2 LLM for detection. Supports both mute (pause) and skip (delayed resume) actions.",
   "version": "1.0.0",
-  "minimumJellyfinVersion": "10.8.0",
+  "minimumJellyfinVersion": "10.9.0",
+  "author": "scroftster",
   "logo": "https://raw.githubusercontent.com/scroftster/jellyfin-profanity-filter/main/src/ui/icon.png",
-  "screenshots": [
-    "https://raw.githubusercontent.com/scroftster/jellyfin-profanity-filter/main/src/ui/screenshots/dashboard.png"
+  "categories": [
+    "Audio"
   ],
   "tags": [
     "audio",
@@ -15,14 +16,5 @@
     "whisper",
     "ai"
   ],
-  "mediaTags": [],
-  "categories": [
-    "Audio"
-  ],
-  "author": "scroftster",
-  "targetPlatform": "Abyss",
-  "updateMode": "store",
-  "languages": [
-    "en-US"
-  ]
+  "targetAbi": "10.11.0.0"
 }
